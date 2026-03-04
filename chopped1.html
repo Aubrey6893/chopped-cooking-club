@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHOPPED: Cooking Club Edition</title>
+    <style>
+        :root {
+            --chopped-red: #d32f2f;
+            --chopped-yellow: #ffc107;
+            --dark-bg: #121212;
+            --panel-bg: #1e1e1e;
+        }
+        body {
+            background-color: var(--dark-bg);
+            color: #ffffff;
+            font-family: 'Impact', 'Arial Narrow', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: var(--panel-bg);
+            border: 4px solid var(--chopped-red);
+            border-radius: 4px;
+            padding: 40px 20px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            text-align: center;
+        }
+        h1 { font-size: 4.5rem; margin: 0; color: var(--chopped-red); letter-spacing: 4px; text-shadow: 3px 3px #000; }
+        h2 { font-size: 1.8rem; margin: 0 0 10px 0; color: var(--chopped-yellow); text-transform: uppercase; font-style: italic; }
+        
+        .video-wrapper {
+            display: none;
+            margin: 20px auto;
+            position: relative;
+            padding-bottom: 56.25%; 
+            height: 0;
+            overflow: hidden;
+            border: 2px solid var(--chopped-red);
+            width: 90%;
+        }
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .btn-video-toggle {
+            background: #444;
+            color: var(--chopped-yellow);
+            border: 1px solid var(--chopped-yellow);
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+            transition: 0.2s;
+        }
+        .btn-video-toggle:hover { background: #555; color: white; }
+
+        #login-area { border-top: 1px solid #333; padding-top: 30px; margin-top: 20px; }
+        
+        input {
+            font-family: sans-serif;
+            padding: 15px;
+            width: 70%;
+            font-size: 1.2rem;
+            border: none;
+            border-bottom: 3px solid var(--chopped-yellow);
+            background: #333;
+            color: white;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .btn {
+            background: var(--chopped-red);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .btn:hover { background: #ff1744; transform: scale(1.05); }
+        .btn-reveal { background: #444; font-size: 1rem; margin: 10px; padding: 12px 25px; border: 1px solid var(--chopped-yellow); }
+
+        #basket-display { display: none; margin-top: 30px; border-top: 2px solid #333; padding-top: 20px; }
+        .ingredient-box {
+            background: #000;
+            border: 2px solid var(--chopped-yellow);
+            margin: 15px auto;
+            padding: 25px;
+            width: 85%;
+            font-size: 2rem;
+            color: var(--chopped-yellow);
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+        .revealed { color: white; background: #222; border-color: var(--chopped-red); box-shadow: inset 0 0 15px rgba(211, 47, 47, 0.5); }
+
+        .ai-suggestions {
+            margin-top: 40px;
+            padding: 25px;
+            background: #111;
+            border-top: 4px solid var(--chopped-red);
+            border-bottom: 4px solid var(--chopped-red);
+            text-align: left;
+            font-family: 'Georgia', serif;
+            display: none;
+        }
+        .ai-suggestions h4 { color: var(--chopped-yellow); margin: 0 0 15px 0; text-transform: uppercase; font-family: sans-serif; font-size: 1.2rem; text-align: center; }
+        .recipe { margin-bottom: 20px; line-height: 1.6; border-bottom: 1px solid #333; padding-bottom: 15px; }
+        .recipe-title { color: #fff; font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .recipe-desc { color: #bbb; font-style: italic; font-size: 1rem; }
+
+        #admin-panel { display: none; margin-top: 50px; width: 100%; max-width: 600px; text-align: left; font-family: sans-serif; border-top: 1px solid #444; }
+        .admin-link { color: #333; text-decoration: none; font-size: 0.8rem; margin-top: 100px; cursor: pointer; display: block; }
+        .claimed-row { border-bottom: 1px solid #333; padding: 10px 0; font-size: 0.9rem; color: #888; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>CHOPPED</h1>
+    <h2>Cooking Club Edition</h2>
+
+    <button class="btn-video-toggle" id="video-btn" onclick="toggleVideo()">📺 WATCH CONCEPT</button>
+    <div id="intro-video" class="video-wrapper">
+        <iframe src="https://www.youtube.com/embed/EQgZHTJZskk" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+    </div>
+
+    <div id="login-area">
+        <input type="text" id="userName" placeholder="ENTER CHEF NAME" autocomplete="off">
+        <br>
+        <button class="btn" onclick="openBasket()">CLAIM BASKET</button>
+    </div>
+
+    <div id="basket-display">
+        <h3 id="welcome-msg" style="color: var(--chopped-yellow); font-size: 1.8rem;"></h3>
+        <p style="font-family: sans-serif; font-size: 0.9rem; color: #888; text-transform: uppercase; letter-spacing: 1px;">Click each box to face your mystery...</p>
+        
+        <div id="ing-0" class="ingredient-box" onclick="revealOne(0)">? ? ?</div>
+        <div id="ing-1" class="ingredient-box" onclick="revealOne(1)">? ? ?</div>
+        <div id="ing-2" class="ingredient-box" onclick="revealOne(2)">? ? ?</div>
+
+        <button class="btn btn-reveal" id="reveal-all-btn" onclick="revealAll()">REVEAL ALL INGREDIENTS</button>
+
+        <div class="ai-suggestions" id="ai-box">
+            <h4>💡 Chef's Composed Dish Concepts:</h4>
+            <div class="recipe">
+                <span id="rt-1" class="recipe-title"></span>
+                <span id="rd-1" class="recipe-desc"></span>
+            </div>
+            <div class="recipe" style="border:none;">
+                <span id="rt-2" class="recipe-title"></span>
+                <span id="rd-2" class="recipe-desc"></span>
+            </div>
+        </div>
+        
+        <button class="btn" style="margin-top:20px; font-size: 1rem; background: #333;" onclick="resetUI()">DONE</button>
+    </div>
+</div>
+
+<a class="admin-link" onclick="toggleAdmin()">Admin Access</a>
+
+<div id="admin-panel">
+    <h3>Admin Dashboard</h3>
+    <div id="admin-log"></div>
+    <button onclick="clearSystem()" style="background: var(--chopped-red); color: white; padding: 10px; margin-top: 20px; border:none; cursor:pointer;">WIPE ALL DATA (RESET GAME)</button>
+</div>
+
+<script>
+    const basketData = {
+        "Bacon, Beets, Honey": [["Honey-Lacquered Beet 'Steaks'", "Thick-cut roasted beets glazed in a spicy wildflower honey, topped with double-smoked bacon lardons and a goat cheese whip."], ["Savory Beet & Bacon Jam Tart", "A shortcrust pastry filled with balsamic-reduced beet and bacon jam, finished with a honey-infused crème fraîche."]],
+        "Tofu, Goat Cheese, Lemon": [["Lemon-Goat Cheese Encased Tofu", "Crispy-seared tofu blocks stuffed with a lemon-zest and herb goat cheese mousse, served over a charred citrus gastrique."], ["Whipped Goat Cheese & Lemon Tofu Mousse", "A savory appetizer of aerated goat cheese and silken tofu, topped with candied lemon peel and served with crostini."]],
+        "Sausage, Mushrooms, Tahini": [["Wild Mushroom & Sausage Ragout", "A rustic, deconstructed sausage and earthy mushroom medley served over a smooth, garlic-tahini purée with toasted sesame seeds."], ["Tahini-Glazed Sausage Skewers", "Grilled sausage and king oyster mushroom skewers brushed with a savory-sweet tahini glaze and finished with fresh parsley."]],
+        "Dark Chocolate, Mascarpone, Rosemary": [["Rosemary-Infused Chocolate Ganache", "A decadent dark chocolate tart steeped with fresh rosemary, topped with a cloud of whipped mascarpone and rosemary-sea salt brittle."], ["Mascarpone Mousse with Chocolate Soil", "Savory-sweet mascarpone quenelles resting on a bed of dark chocolate 'dirt,' garnished with fried rosemary sprigs."]],
+        "Coffee, Sweet Potato, Puff Pastry": [["Espresso-Roasted Sweet Potato Galette", "Flaky puff pastry layers surrounding coffee-rubbed roasted sweet potatoes, drizzled with a dark espresso-maple reduction."], ["Sweet Potato & Coffee Cream Puffs", "Puff pastry spheres filled with a roasted sweet potato purée and topped with a shimmering coffee-bean glaze."]],
+        "Miso, Arugula, Hazelnuts": [["Miso-Brown Butter Roasted Hazelnuts", "A warm arugula salad tossed in a miso-lime vinaigrette, topped with hazelnuts toasted in miso-infused brown butter."], ["Charred Miso-Arugula Pesto Pasta", "Hand-cut pasta tossed in a peppery arugula and white miso pesto, finished with a generous dusting of crushed toasted hazelnuts."]],
+        "Cream Cheese, Figs, Panko": [["Panko-Crusted Cream Cheese 'Croutons'", "Deep-fried cream cheese squares breaded in golden panko, served with a warm black fig compote and balsamic honey."], ["Baked Fig & Cream Cheese Crostata", "Fresh figs nestled in a cream cheese base with a crunchy panko-cinnamon crumble topping."]],
+        "Soy Sauce, Eggplant, Maple": [["Maple-Soy Lacquered Eggplant", "Roasted eggplant 'steaks' brushed with a sticky maple and dark soy reduction, garnished with toasted sesame and scallion curls."], ["Crispy Soy-Ginger Eggplant Fritters", "Eggplant tempura tossed in a maple-soy glaze and served with a zesty ginger dipping sauce."]],
+        "Ricotta, Berries, Chili Crisp": [["Spicy Berry & Ricotta Toast", "Whipped lemon ricotta on sourdough topped with balsamic-macerated berries and a bold drizzle of smoky chili crisp."], ["Chili Crisp Berry Parfait", "Savory ricotta layers alternated with a spicy berry reduction and honey-toasted oat clusters."]],
+        "Cheddar, Squash, Wine": [["White Wine Squash & Cheddar Fondue", "A silky white wine and sharp cheddar fondue served inside a roasted acorn squash bowl with crusty bread."], ["Cheddar-Crusted Wine Braised Squash", "Butternut squash medallions braised in dry white wine, topped with a crisp aged-cheddar and herb crust."]],
+        "Dijon, Leeks, Walnuts": [["Dijon-Cream Braised Leeks", "Slow-melted leeks in a tangy Dijon mustard cream sauce, topped with honey-toasted walnut halves and fresh thyme."], ["Leek & Walnut Dijon Tartlet", "Savory pastry filled with caramelized leeks and a Dijon-walnut pesto, topped with a dollop of crème fraîche."]],
+        "Yogurt, Dates, Polenta": [["Crispy Polenta with Date Chutney", "Pan-fried polenta cakes topped with a cool, minted yogurt sauce and a chunky spiced date and orange chutney."], ["Creamy Polenta with Yogurt Swirl", "Warm, buttery polenta topped with warm honey-glazed dates and a tangy Greek yogurt drizzle."]],
+        "Harissa, Cucumber, Pecans": [["Chilled Harissa-Cucumber Soup", "A refreshing cucumber gazpacho spiked with harissa heat, topped with smoky harissa-roasted pecans and dill."], ["Harissa-Roasted Pecan & Cucumber Salad", "Compressed cucumber ribbons tossed with a harissa-lime vinaigrette and crunchy candied pecans."]],
+        "Balsamic Vinegar, Fennel, Dried Fruit": [["Balsamic-Plumped Fruit & Fennel Slaw", "Shaved fennel and apple salad with dried fruit rehydrated in aged balsamic, finished with toasted fennel seeds."], ["Roasted Fennel with Balsamic Reduction", "Caramelized fennel bulbs served with a warm dried-fruit gastrique and a thick balsamic glaze."]],
+        "Jelly, Oranges, Capers": [["Orange-Caper Glazed Protein", "Pan-seared scallops or pork with a pan sauce made from orange segments, salty capers, and a sweet jelly melt."], ["Savory Orange-Jelly & Caper Glaze", "A reduction of orange juice and jelly used to lacquer roasted vegetables, finished with fried capers for texture."]],
+        "Hoisin Sauce, Radishes, Phyllo Dough": [["Hoisin-Glazed Radish Phyllo Purses", "Crispy phyllo dough packets filled with hoisin-marinated roasted radishes and bok choy."], ["Phyllo-Crusted Radish Tart", "Layers of buttery phyllo topped with a thin layer of hoisin sauce and shingled, paper-thin radishes."]],
+        "Sour Cream, Apples, Smoked Paprika": [["Smoked Paprika Apple Latkes", "Grated apple and potato pancakes seasoned with smoked paprika, served with a dollop of chive sour cream."], ["Apple & Sour Cream Savory Mousse", "A light sour cream mousse topped with a smoked paprika apple compote and toasted breadcrumbs."]],
+        "Barbecue Sauce, Nappa Cabbage, Bread": [["Grilled BBQ Cabbage 'Steaks'", "Charred Nappa cabbage brushed with smoky BBQ sauce, served over a thick slice of grilled garlic bread."], ["BBQ Cabbage & Bread Panzanella", "Toasted bread cubes tossed with shredded BBQ-roasted cabbage and a zesty cider vinaigrette."]],
+        "Fish Sauce, Tomatoes, Quinoa": [["Umami Tomato & Quinoa Pilaf", "Toasted quinoa cooked in a tomato-fish sauce broth, topped with blistered cherry tomatoes and Thai basil."], ["Fish Sauce Caramelized Tomato Toast", "Slow-roasted tomatoes deglazed with fish sauce, served over a crispy quinoa-crusted flatbread."]],
+        "Brown Butter, Olives, Corn Meal": [["Brown Butter Cornmeal Skillet Cake", "A savory cornmeal cake featuring salty Kalamata olive pieces and a generous drizzle of nutty brown butter."], ["Crispy Cornmeal Olives", "Large green olives stuffed with brown butter cream, breaded in cornmeal and fried until golden."]],
+        "Gravy, Sun-Dried Tomatoes, Crackers": [["Sun-Dried Tomato Gravy over Cracker-Crust", "A rich, savory gravy infused with sun-dried tomato oil, served over cracker-breaded chicken or eggplant."], ["Savory Cracker & Tomato Stuffing", "A textured stuffing made from crushed crackers, sun-dried tomatoes, and herbs, moistened with a rich pan gravy."]],
+        "Rice Vinegar, Limes, Farro": [["Zesty Lime & Rice Vinegar Farrotto", "A farro 'risotto' cooked with a lime-infused stock and finished with a splash of bright rice vinegar and cilantro."], ["Farro Salad with Rice Vinegar Dressing", "Warm farro tossed with lime zest, rice vinegar, and charred aromatics for a bright, acidic side dish."]],
+        "Cauliflower, Chickpeas, Chai": [["Chai-Spiced Cauliflower & Chickpea Roast", "Whole-roasted cauliflower and crispy chickpeas seasoned with warm chai spices and a honey-chai glaze."], ["Creamy Chai-Infused Chickpea Purée", "A smooth chickpea mash flavored with chai aromatics, topped with turmeric-roasted cauliflower florets."]],
+        "Curry, Beans, Beer": [["Beer-Braised Curry Bean Stew", "Hearty white beans slow-cooked in a craft ale and coconut curry broth, topped with fresh lime and chili."], ["Curry-Beer Battered Green Beans", "Crispy, beer-battered beans served with a spicy curry-yogurt dipping sauce."]],
+        "Vanilla, Spicy Pepper, Potato Chips": [["Spicy Vanilla Potato Chip Toffee", "A savory-sweet brittle made with crushed potato chips, vanilla bean, and a kick of cayenne pepper."], ["Vanilla-Chili Glazed Potato Chip Chicken", "Chicken wings or tofu crusted in potato chips and tossed in a vanilla-infused spicy pepper glaze."]]
+    };
+
+    const allBaskets = Object.keys(basketData);
+    let state = JSON.parse(localStorage.getItem('choppedState_final')) || { claimed: [], available: [...allBaskets] };
+    let currentBasket = [];
+    let revealedCount = 0;
+
+    function toggleVideo() {
+        const vid = document.getElementById('intro-video');
+        const btn = document.getElementById('video-btn');
+        if (vid.style.display === 'block') {
+            vid.style.display = 'none';
+            btn.innerText = "📺 WATCH CONCEPT";
+        } else {
+            vid.style.display = 'block';
+            btn.innerText = "✖ CLOSE VIDEO";
+        }
+    }
+
+    function openBasket() {
+        const name = document.getElementById('userName').value.trim();
+        if (!name) return alert("Enter your name, Chef!");
+        const existing = state.claimed.find(c => c.name.toLowerCase() === name.toLowerCase());
+        let basketString = "";
+        if (existing) {
+            basketString = existing.basket;
+        } else {
+            if (state.available.length === 0) return alert("The pantry is empty!");
+            const idx = Math.floor(Math.random() * state.available.length);
+            basketString = state.available.splice(idx, 1)[0];
+            state.claimed.push({ name: name, basket: basketString });
+            save();
+        }
+        currentBasket = basketString.split(', ');
+        document.getElementById('welcome-msg').innerText = name.toUpperCase() + ", FACES THE BASKET!";
+        document.getElementById('login-area').style.display = 'none';
+        document.getElementById('video-btn').style.display = 'none';
+        document.getElementById('intro-video').style.display = 'none';
+        document.getElementById('basket-display').style.display = 'block';
+        resetReveal();
+    }
+
+    function revealOne(index) {
+        const el = document.getElementById('ing-' + index);
+        if (el.classList.contains('revealed')) return;
+        el.innerText = "🔪 " + currentBasket[index];
+        el.classList.add('revealed');
+        revealedCount++;
+        checkCompletion();
+    }
+
+    function revealAll() { for(let i=0; i<3; i++) revealOne(i); }
+
+    function checkCompletion() {
+        if (revealedCount === 3) {
+            const basketStr = currentBasket.join(', ');
+            const recipes = basketData[basketStr];
+            document.getElementById('rt-1').innerText = recipes[0][0];
+            document.getElementById('rd-1').innerText = recipes[0][1];
+            document.getElementById('rt-2').innerText = recipes[1][0];
+            document.getElementById('rd-2').innerText = recipes[1][1];
+            document.getElementById('ai-box').style.display = 'block';
+            document.getElementById('reveal-all-btn').style.display = 'none';
+        }
+    }
+
+    function resetReveal() {
+        revealedCount = 0;
+        for(let i=0; i<3; i++) {
+            const el = document.getElementById('ing-' + i);
+            el.innerText = "? ? ?";
+            el.classList.remove('revealed');
+        }
+        document.getElementById('ai-box').style.display = 'none';
+        document.getElementById('reveal-all-btn').style.display = 'inline-block';
+    }
+
+    function resetUI() {
+        document.getElementById('userName').value = "";
+        document.getElementById('login-area').style.display = 'block';
+        document.getElementById('video-btn').style.display = 'inline-block';
+        document.getElementById('video-btn').innerText = "📺 WATCH CONCEPT";
+        document.getElementById('basket-display').style.display = 'none';
+        document.getElementById('intro-video').style.display = 'none';
+    }
+
+    function toggleAdmin() {
+        const pw = prompt("Enter Admin Password:");
+        if (pw === "chef") {
+            const panel = document.getElementById('admin-panel');
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+            renderLog();
+        } else { alert("Access Denied."); }
+    }
+
+    function renderLog() {
+        const log = document.getElementById('admin-log');
+        log.innerHTML = state.claimed.map(c => `<div class="claimed-row"><b>${c.name}</b>: ${c.basket}</div>`).join('');
+    }
+
+    function clearSystem() {
+        if (confirm("Reset everything?")) {
+            localStorage.removeItem('choppedState_final');
+            location.reload();
+        }
+    }
+
+    function save() { localStorage.setItem('choppedState_final', JSON.stringify(state)); }
+</script>
+
+</body>
+</html>
