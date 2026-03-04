@@ -127,6 +127,7 @@
         #admin-panel { display: none; margin-top: 50px; width: 100%; max-width: 600px; text-align: left; font-family: sans-serif; border-top: 1px solid #444; }
         .admin-link { color: #333; text-decoration: none; font-size: 0.8rem; margin-top: 100px; cursor: pointer; display: block; }
         .claimed-row { border-bottom: 1px solid #333; padding: 10px 0; font-size: 0.9rem; color: #888; }
+        .sync-btn { background: #444; color: var(--chopped-yellow); border: 1px solid var(--chopped-yellow); padding: 5px 10px; cursor: pointer; font-size: 0.7rem; }
     </style>
 </head>
 <body>
@@ -176,11 +177,15 @@
 
 <div id="admin-panel">
     <h3>Admin Dashboard</h3>
-    <div id="admin-log"></div>
-    <button onclick="clearSystem()" style="background: var(--chopped-red); color: white; padding: 10px; margin-top: 20px; border:none; cursor:pointer;">WIPE ALL DATA (RESET GAME)</button>
+    <button class="sync-btn" onclick="manualSync()">FORCE SYNC LOCAL DATA TO GOOGLE SHEET</button>
+    <div id="admin-log" style="margin-top:20px;"></div>
+    <button onclick="clearSystem()" style="background: var(--chopped-red); color: white; padding: 10px; margin-top: 40px; border:none; cursor:pointer; font-size: 0.7rem;">WIPE ALL DATA (RESET GAME)</button>
 </div>
 
 <script>
+    // --- GOOGLE SHEETS CONFIG ---
+    const GOOGLE_URL = "https://script.google.com/macros/s/AKfycbxR8d-6QBcPMydolYLZKVDX-p5h8b3_a7pIz_4hAcffZGj3NDMR1xmmV_UmtuqnIR9b9Q/exec";
+
     const basketData = {
         "Bacon, Beets, Honey": [["Honey-Lacquered Beet 'Steaks'", "Thick-cut roasted beets glazed in a spicy wildflower honey, topped with double-smoked bacon lardons and a goat cheese whip."], ["Savory Beet & Bacon Jam Tart", "A shortcrust pastry filled with balsamic-reduced beet and bacon jam, finished with a honey-infused crème fraîche."]],
         "Tofu, Goat Cheese, Lemon": [["Lemon-Goat Cheese Encased Tofu", "Crispy-seared tofu blocks stuffed with a lemon-zest and herb goat cheese mousse, served over a charred citrus gastrique."], ["Whipped Goat Cheese & Lemon Tofu Mousse", "A savory appetizer of aerated goat cheese and silken tofu, topped with candied lemon peel and served with crostini."]],
@@ -194,7 +199,7 @@
         "Cheddar, Squash, Wine": [["White Wine Squash & Cheddar Fondue", "A silky white wine and sharp cheddar fondue served inside a roasted acorn squash bowl with crusty bread."], ["Cheddar-Crusted Wine Braised Squash", "Butternut squash medallions braised in dry white wine, topped with a crisp aged-cheddar and herb crust."]],
         "Dijon, Leeks, Walnuts": [["Dijon-Cream Braised Leeks", "Slow-melted leeks in a tangy Dijon mustard cream sauce, topped with honey-toasted walnut halves and fresh thyme."], ["Leek & Walnut Dijon Tartlet", "Savory pastry filled with caramelized leeks and a Dijon-walnut pesto, topped with a dollop of crème fraîche."]],
         "Yogurt, Dates, Polenta": [["Crispy Polenta with Date Chutney", "Pan-fried polenta cakes topped with a cool, minted yogurt sauce and a chunky spiced date and orange chutney."], ["Creamy Polenta with Yogurt Swirl", "Warm, buttery polenta topped with warm honey-glazed dates and a tangy Greek yogurt drizzle."]],
-        "Harissa, Cucumber, Pecans": [["Chilled Harissa-Cucumber Soup", "A refreshing cucumber gazpacho spiked with harissa heat, topped with smoky harissa-roasted pecans and dill."], ["Harissa-Roasted Pecan & Cucumber Salad", "Compressed cucumber ribbons tossed with a harissa-lime vinaigrette and crunchy candied pecans."]],
+        "Harissa, Cucumber, Pecans": [["Chilled Harissa-Cucumber Soup", "A refreshing cucumber gazpacho spiked with harissa heat, topped with smoky harissa-roasted pecans and dills."], ["Harissa-Roasted Pecan & Cucumber Salad", "Compressed cucumber ribbons tossed with a harissa-lime vinaigrette and crunchy candied pecans."]],
         "Balsamic Vinegar, Fennel, Dried Fruit": [["Balsamic-Plumped Fruit & Fennel Slaw", "Shaved fennel and apple salad with dried fruit rehydrated in aged balsamic, finished with toasted fennel seeds."], ["Roasted Fennel with Balsamic Reduction", "Caramelized fennel bulbs served with a warm dried-fruit gastrique and a thick balsamic glaze."]],
         "Jelly, Oranges, Capers": [["Orange-Caper Glazed Protein", "Pan-seared scallops or pork with a pan sauce made from orange segments, salty capers, and a sweet jelly melt."], ["Savory Orange-Jelly & Caper Glaze", "A reduction of orange juice and jelly used to lacquer roasted vegetables, finished with fried capers for texture."]],
         "Hoisin Sauce, Radishes, Phyllo Dough": [["Hoisin-Glazed Radish Phyllo Purses", "Crispy phyllo dough packets filled with hoisin-marinated roasted radishes and bok choy."], ["Phyllo-Crusted Radish Tart", "Layers of buttery phyllo topped with a thin layer of hoisin sauce and shingled, paper-thin radishes."]],
@@ -213,6 +218,23 @@
     let state = JSON.parse(localStorage.getItem('choppedState_final')) || { claimed: [], available: [...allBaskets] };
     let currentBasket = [];
     let revealedCount = 0;
+
+    async function syncToGoogle(name, basket) {
+        if(!GOOGLE_URL) return;
+        try {
+            await fetch(GOOGLE_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({ name: name, basket: basket })
+            });
+        } catch (e) { console.error("Sync error:", e); }
+    }
+
+    function manualSync() {
+        if (state.claimed.length === 0) return alert("No local data to sync!");
+        state.claimed.forEach(c => syncToGoogle(c.name, c.basket));
+        alert("Sent your local claims to the master Google Sheet!");
+    }
 
     function toggleVideo() {
         const vid = document.getElementById('intro-video');
@@ -239,6 +261,7 @@
             basketString = state.available.splice(idx, 1)[0];
             state.claimed.push({ name: name, basket: basketString });
             save();
+            syncToGoogle(name, basketString);
         }
         currentBasket = basketString.split(', ');
         document.getElementById('welcome-msg').innerText = name.toUpperCase() + ", FACES THE BASKET!";
